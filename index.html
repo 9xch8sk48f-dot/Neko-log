@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ねこログ">
+  <title>ねこログ - ごはん・体重管理</title>
+  <style>
+    :root{
+      --bg:#fff7ef; --card:#ffffff; --ink:#2b2521; --muted:#81736a; --line:#eadbd0;
+      --accent:#d86f34; --soft:#fff0e4; --shadow:0 10px 30px rgba(73,44,25,.08);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+      radial-gradient(circle at 0% 0%, #ffe4cc 0, transparent 34%),
+      linear-gradient(180deg,var(--bg),#fff);color:var(--ink)}
+    header{padding:calc(18px + env(safe-area-inset-top)) 18px 10px;position:sticky;top:0;z-index:5;background:rgba(255,247,239,.86);backdrop-filter:blur(14px)}
+    .hero{max-width:780px;margin:auto;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    h1{font-size:26px;margin:0;letter-spacing:-.02em}.sub{color:var(--muted);font-size:13px;margin-top:3px}
+    main{padding:8px 14px calc(92px + env(safe-area-inset-bottom));max-width:780px;margin:auto}
+    .card{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:22px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+    .section-title{font-size:17px;font-weight:800;margin:0 0 12px}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 5px}
+    input,select,textarea{width:100%;font-size:16px;padding:12px 13px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink)}
+    textarea{min-height:62px;resize:vertical}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    @media(max-width:430px){.grid3{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+    button{border:0;border-radius:999px;padding:12px 16px;font-weight:800;font-size:15px;background:var(--accent);color:white;box-shadow:0 4px 10px rgba(216,111,52,.20)}
+    button.secondary{background:#fff;color:var(--accent);border:1px solid #efc4a6;box-shadow:none}
+    button.danger{background:#fff;color:#b73535;border:1px solid #efb6b6;box-shadow:none}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.right{margin-left:auto}
+    .stat-wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:10px}@media(max-width:540px){.stat-wrap{grid-template-columns:1fr 1fr}}
+    .stat{background:linear-gradient(180deg,#fff,#fff7f0);border:1px solid var(--line);border-radius:18px;padding:14px}
+    .stat .muted{font-size:12px}.big{font-size:28px;font-weight:900;letter-spacing:-.03em}
+    .pill{display:inline-flex;gap:5px;align-items:center;padding:7px 10px;border-radius:999px;background:var(--soft);border:1px solid #f2cfb5;font-size:13px;margin:3px}
+    .entry{border-top:1px solid var(--line);padding:12px 0}.entry:first-child{border-top:0}.date{font-weight:850}.muted{color:var(--muted);font-size:13px}
+    .tabs{position:fixed;bottom:0;left:0;right:0;z-index:10;background:rgba(255,255,255,.92);border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));backdrop-filter:blur(16px)}
+    .tabs button{background:#fff;color:var(--ink);border:1px solid var(--line);padding:10px 14px;box-shadow:none}.tabs button.active{background:var(--accent);color:white;border-color:var(--accent)}
+    canvas{width:100%;height:300px;border:1px solid var(--line);border-radius:16px;background:#fff}
+    .hidden{display:none}.mini{font-size:12px;color:var(--muted)}
+    .quick button{padding:10px 13px;font-size:14px;background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+    .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#2b2521;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;opacity:0;transition:.2s;z-index:20}.toast.show{opacity:1}
+  </style>
+</head>
+<body>
+<header>
+  <div class="hero">
+    <div><h1>🐾 ねこログ</h1><div class="sub">ごはん・体重・トイレをiPhoneでサクッと記録</div></div>
+    <button class="secondary" onclick="setToday()">今日</button>
+  </div>
+</header>
+
+<main>
+<section id="home">
+  <div class="card">
+    <div class="section-title">今日のまとめ</div>
+    <div class="stat-wrap">
+      <div class="stat"><div class="muted">今日のごはん合計</div><div class="big" id="todayFood">0g</div><div class="mini" id="todayCount">記録なし</div></div>
+      <div class="stat"><div class="muted">最新体重</div><div class="big" id="latestWeight">-</div><div class="mini" id="latestCat">まだなし</div></div>
+    </div>
+    <div id="catPills" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">記録する</div>
+    <div class="grid">
+      <div><label>日付</label><input id="date" type="date"></div>
+      <div><label>ねこ</label><select id="cat"></select></div>
+    </div>
+    <label>ごはん量をすばやく入力</label>
+    <div class="row quick">
+      <button onclick="plusFood(5)">+5g</button><button onclick="plusFood(10)">+10g</button><button onclick="plusFood(20)">+20g</button><button onclick="plusFood(-5)">-5g</button>
+    </div>
+    <div class="grid3">
+      <div><label>ごはん(g)</label><input id="food" type="number" inputmode="decimal" placeholder="例 25"></div>
+      <div><label>体重(kg)</label><input id="weight" type="number" step="0.01" inputmode="decimal" placeholder="例 1.85"></div>
+      <div class="wide"><label>水/ミルク(ml)</label><input id="water" type="number" inputmode="decimal" placeholder="任意"></div>
+    </div>
+    <div class="grid">
+      <div><label>おしっこ</label><select id="pee"><option value="">未記録</option><option>あり</option><option>なし</option></select></div>
+      <div><label>うんち</label><select id="poop"><option value="">未記録</option><option>あり</option><option>なし</option></select></div>
+    </div>
+    <label>メモ</label><textarea id="note" placeholder="例：夜中に食べたっぽい、元気あり"></textarea>
+    <div class="row" style="margin-top:12px"><button onclick="addEntry()">保存</button><button class="secondary" onclick="exportCSV()">CSV出力</button></div>
+  </div>
+
+  <div class="card">
+    <div class="row"><div class="section-title">履歴</div><button class="secondary right" onclick="toggleOnlyToday()">今日だけ</button></div>
+    <div id="entries"></div>
+  </div>
+</section>
+
+<section id="chart" class="hidden">
+  <div class="card">
+    <div class="section-title">グラフ</div>
+    <div class="grid">
+      <div><label>ねこ</label><select id="chartCat" onchange="drawChart()"></select></div>
+      <div><label>表示</label><select id="chartMode" onchange="drawChart()"><option value="weight">体重</option><option value="food">ごはん量</option></select></div>
+    </div>
+    <canvas id="mainChart" width="720" height="360"></canvas>
+    <div id="chartSummary" class="muted" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<section id="settings" class="hidden">
+  <div class="card">
+    <div class="section-title">ねこ設定</div>
+    <label>名前を追加</label><input id="newCat" placeholder="例：るる">
+    <div class="row" style="margin-top:10px"><button onclick="addCat()">追加</button><button class="danger" onclick="clearAll()">全データ削除</button></div>
+    <div id="catList" style="margin-top:14px"></div>
+    <div class="muted" style="margin-top:14px">※ この版はiPhoneのブラウザ内保存です。正式アプリ版にすると、iCloud共有やパートナー共有を作りやすくなります。</div>
+  </div>
+</section>
+</main>
+
+<nav class="tabs">
+  <button id="tabHome" class="active" onclick="showTab('home')">記録</button>
+  <button id="tabChart" onclick="showTab('chart')">グラフ</button>
+  <button id="tabSettings" onclick="showTab('settings')">設定</button>
+</nav>
+<div id="toast" class="toast">保存しました</div>
+
+<script>
+const KEY='neko-log-v2';
+let old = localStorage.getItem('neko-log-v1');
+let data = JSON.parse(localStorage.getItem(KEY) || old || '{"cats":["るる","もう1匹"],"entries":[]}');
+let onlyToday=false;
+document.getElementById('date').valueAsDate = new Date();
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(data)); render(); }
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1300)}
+function setToday(){document.getElementById('date').valueAsDate=new Date();toast('今日にしました')}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function num(v){return Number(v)||0}
+function plusFood(x){const el=document.getElementById('food'); el.value=Math.max(0,num(el.value)+x);}
+
+function render(){
+  for (const id of ['cat','chartCat']) {
+    const el=document.getElementById(id); const val=el.value; el.innerHTML='';
+    data.cats.forEach(c=>{ const o=document.createElement('option'); o.textContent=c; o.value=c; el.appendChild(o); });
+    if(data.cats.includes(val)) el.value=val;
+  }
+  document.getElementById('catList').innerHTML=data.cats.map(c=>`<span class="pill">🐱 ${c}</span>`).join('');
+  const td = todayStr();
+  const todays = data.entries.filter(e=>e.date===td);
+  const todayFood = todays.reduce((s,e)=>s+num(e.food),0);
+  document.getElementById('todayFood').textContent = `${todayFood}g`;
+  document.getElementById('todayCount').textContent = todays.length ? `${todays.length}件の記録` : '記録なし';
+  const latest = [...data.entries].filter(e=>e.weight).sort((a,b)=> (b.date+b.created).localeCompare(a.date+a.created))[0];
+  document.getElementById('latestWeight').textContent = latest ? `${latest.weight}kg` : '-';
+  document.getElementById('latestCat').textContent = latest ? `${latest.cat} / ${latest.date}` : 'まだなし';
+  document.getElementById('catPills').innerHTML = data.cats.map(c=>{
+    const f=todays.filter(e=>e.cat===c).reduce((s,e)=>s+num(e.food),0);
+    const pe=todays.filter(e=>e.cat===c && e.pee==='あり').length;
+    const po=todays.filter(e=>e.cat===c && e.poop==='あり').length;
+    return `<span class="pill">${c}：🍚${f}g　🚽${pe? 'あり':'-'}　💩${po? 'あり':'-'}</span>`;
+  }).join('');
+  const list = [...data.entries].filter(e=>!onlyToday || e.date===td).sort((a,b)=>(b.date+b.created).localeCompare(a.date+a.created)).slice(0,100);
+  document.getElementById('entries').innerHTML = list.map(e=>`
+    <div class="entry">
+      <div class="date">${e.date}｜${e.cat}</div>
+      <div>${e.food?`🍚 ${e.food}g　`:''}${e.weight?`⚖️ ${e.weight}kg　`:''}${e.water?`💧 ${e.water}ml　`:''}</div>
+      <div class="muted">${e.pee?`おしっこ:${e.pee}　`:''}${e.poop?`うんち:${e.poop}　`:''}${e.note||''}</div>
+      <button class="danger" style="margin-top:8px;padding:7px 10px;font-size:12px" onclick="deleteEntry('${e.id}')">削除</button>
+    </div>`).join('') || '<div class="muted">まだ記録がありません</div>';
+  drawChart();
+}
+function addEntry(){
+  const entry = {
+    id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())),
+    created: new Date().toISOString(),
+    date: document.getElementById('date').value, cat: document.getElementById('cat').value,
+    food: document.getElementById('food').value, weight: document.getElementById('weight').value, water: document.getElementById('water').value,
+    pee: document.getElementById('pee').value, poop: document.getElementById('poop').value, note: document.getElementById('note').value.trim()
+  };
+  if(!entry.date || !entry.cat){ alert('日付とねこを入れてね'); return; }
+  if(!entry.food && !entry.weight && !entry.water && !entry.pee && !entry.poop && !entry.note){ alert('何か1つ記録してね'); return; }
+  data.entries.push(entry);
+  ['food','weight','water','note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pee').value=''; document.getElementById('poop').value='';
+  save(); toast('保存しました');
+}
+function addCat(){const name=document.getElementById('newCat').value.trim();if(name&&!data.cats.includes(name)){data.cats.push(name);document.getElementById('newCat').value='';save();toast('追加しました')}}
+function deleteEntry(id){data.entries=data.entries.filter(e=>e.id!==id);save()}
+function clearAll(){if(confirm('全データを削除します。よいですか？')){data={cats:["るる","もう1匹"],entries:[]};save();}}
+function toggleOnlyToday(){onlyToday=!onlyToday;render();toast(onlyToday?'今日だけ表示':'全履歴表示')}
+function showTab(id){
+  ['home','chart','settings'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id));
+  ['tabHome','tabChart','tabSettings'].forEach(x=>document.getElementById(x).classList.remove('active'));
+  document.getElementById('tab'+id[0].toUpperCase()+id.slice(1)).classList.add('active');
+  if(id==='chart') drawChart();
+}
+function aggregateFood(rows){
+  const map={}; rows.forEach(e=>{ if(e.food) map[e.date]=(map[e.date]||0)+num(e.food); });
+  return Object.keys(map).sort().map(d=>({date:d,value:map[d]}));
+}
+function drawChart(){
+  const canvas=document.getElementById('mainChart'); if(!canvas) return;
+  const ctx=canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height);
+  const cat=document.getElementById('chartCat').value; const mode=document.getElementById('chartMode').value;
+  let rows=data.entries.filter(e=>e.cat===cat);
+  let points = mode==='weight'
+    ? rows.filter(e=>e.weight).sort((a,b)=>a.date.localeCompare(b.date)).map(e=>({date:e.date,value:num(e.weight)}))
+    : aggregateFood(rows);
+  const title = `${cat || ''}の${mode==='weight'?'体重':'ごはん量'}`;
+  ctx.font='bold 18px sans-serif'; ctx.fillStyle='#2b2521'; ctx.fillText(title, 22, 30);
+  const sum=document.getElementById('chartSummary');
+  if(points.length===0){ctx.font='14px sans-serif';ctx.fillText('データがまだありません',22,70); if(sum) sum.textContent=''; return;}
+  const vals=points.map(p=>p.value); let min=Math.min(...vals), max=Math.max(...vals);
+  if(mode==='food') min=0; if(min===max){min-=mode==='weight'?0.1:5;max+=mode==='weight'?0.1:5}
+  const padL=56, padR=20, padT=52, padB=50, W=canvas.width-padL-padR, H=canvas.height-padT-padB;
+  ctx.font='12px sans-serif'; ctx.strokeStyle='#eadbd0'; ctx.fillStyle='#81736a';
+  for(let i=0;i<=4;i++){
+    const y=padT+H*i/4; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+W,y); ctx.stroke();
+    const val=max-(max-min)*i/4; ctx.fillText(mode==='weight'?val.toFixed(2):Math.round(val), 8, y+4);
+  }
+  ctx.strokeStyle='#2b2521'; ctx.beginPath(); ctx.moveTo(padL,padT); ctx.lineTo(padL,padT+H); ctx.lineTo(padL+W,padT+H); ctx.stroke();
+  ctx.strokeStyle='#d86f34'; ctx.lineWidth=3; ctx.beginPath();
+  points.forEach((p,i)=>{const x=padL+(points.length===1?W/2:W*i/(points.length-1)); const y=padT+H-(p.value-min)/(max-min)*H; if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
+  ctx.stroke(); ctx.lineWidth=1; ctx.fillStyle='#d86f34';
+  points.forEach((p,i)=>{const x=padL+(points.length===1?W/2:W*i/(points.length-1)); const y=padT+H-(p.value-min)/(max-min)*H; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();});
+  ctx.fillStyle='#81736a'; ctx.fillText(points[0].date.slice(5), padL, canvas.height-18); ctx.fillText(points[points.length-1].date.slice(5), padL+W-48, canvas.height-18);
+  const latest=points[points.length-1], first=points[0], diff=latest.value-first.value;
+  if(sum) sum.textContent = mode==='weight'
+    ? `最新 ${latest.value.toFixed(2)}kg。初回から ${diff>=0?'+':''}${diff.toFixed(2)}kg。`
+    : `最新日 ${latest.value}g。平均 ${Math.round(vals.reduce((a,b)=>a+b,0)/vals.length)}g/日。`;
+}
+function exportCSV(){
+  const header=['date','cat','food_g','weight_kg','water_ml','pee','poop','note'];
+  const lines=[header.join(',')].concat(data.entries.map(e=>header.map(h=>`"${String({date:e.date,cat:e.cat,food_g:e.food,weight_kg:e.weight,water_ml:e.water,pee:e.pee,poop:e.poop,note:e.note}[h]??'').replaceAll('"','""')}"`).join(',')));
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='neko-log.csv'; a.click();
+}
+render();
+</script>
+</body>
+</html>
