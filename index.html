@@ -52,11 +52,14 @@
     .quick{gap:8px;margin-bottom:4px}
     .quick button{min-width:76px}
     @media(max-width:640px){
-      .record-top-grid{grid-template-columns:1fr}
+      .record-top-grid{grid-template-columns:1fr 1fr}
+      .record-top-grid > div:last-child{grid-column:1/-1}
       .record-input-grid{grid-template-columns:1fr 1fr}
-      #date,#cat{width:100%;font-size:17px}
+      #date,#time,#cat{width:100%;font-size:17px}
     }
     @media(max-width:430px){
+      .record-top-grid{grid-template-columns:1fr}
+      .record-top-grid > div:last-child{grid-column:auto}
       .record-input-grid{grid-template-columns:1fr}
       .quick button{flex:1;min-width:0}
     }
@@ -86,8 +89,9 @@
 
   <div class="card">
     <div class="section-title">記録する</div>
-    <div class="grid record-top-grid">
+    <div class="grid3 record-top-grid">
       <div><label>日付</label><input id="date" type="date"></div>
+      <div><label>時間</label><input id="time" type="time"></div>
       <div><label>ねこ</label><select id="cat"></select></div>
     </div>
     <label>ごはん量をすばやく入力</label>
@@ -130,12 +134,18 @@
     <div class="section-title">ねこ設定</div>
     <label>名前を追加</label><input id="newCat" placeholder="例：るる">
     <div class="row" style="margin-top:10px"><button onclick="addCat()">追加</button><button class="danger" onclick="clearAll()">全データ削除</button></div>
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" onclick="exportBackup()">バックアップ保存</button>
+      <button class="secondary" onclick="document.getElementById('backupFile').click()">バックアップ復元</button>
+      <input id="backupFile" type="file" accept="application/json" style="display:none" onchange="importBackup(event)">
+    </div>
     <div id="catList" class="cat-check-list"></div>
     <div class="row" style="margin-top:10px">
       <button class="danger" onclick="deleteSelectedCats()">チェックしたねこを削除</button>
     </div>
     <div class="muted" style="margin-top:14px">※ ねこを削除すると、その子の記録も一緒に削除されます。</div>
     <div class="muted" style="margin-top:6px">※ この版はiPhoneのブラウザ内保存です。正式アプリ版にすると、iCloud共有やパートナー共有を作りやすくなります。</div>
+    <div class="muted" style="margin-top:6px">現在のアプリ版：v5 / 保存キー：neko-log-data</div>
   </div>
 </section>
 </main>
@@ -148,16 +158,46 @@
 <div id="toast" class="toast">保存しました</div>
 
 <script>
-const KEY='neko-log-v2';
-let old = localStorage.getItem('neko-log-v1');
-let data = JSON.parse(localStorage.getItem(KEY) || old || '{"cats":["るる","もう1匹"],"entries":[]}');
+// データ保存キーは今後のアップデートでも固定。
+// APP_VERSIONは表示・管理用で、保存先キーとは分ける。
+const APP_VERSION='v5';
+const KEY='neko-log-data';
+const LEGACY_KEYS=['neko-log-v3','neko-log-v2','neko-log-v1'];
+const DEFAULT_DATA={cats:["るる","もう1匹"],entries:[]};
+
+function loadData(){
+  const current = localStorage.getItem(KEY);
+  if(current) return JSON.parse(current);
+
+  // 旧バージョンの保存データがあれば自動移行
+  for(const k of LEGACY_KEYS){
+    const old = localStorage.getItem(k);
+    if(old){
+      localStorage.setItem(KEY, old);
+      return JSON.parse(old);
+    }
+  }
+  return DEFAULT_DATA;
+}
+
+let data = loadData();
+data.entries = (data.entries || []).map(e=>({time:'', ...e}));
+data.cats = data.cats || ["るる","もう1匹"];
 let onlyToday=false;
 document.getElementById('date').valueAsDate = new Date();
+document.getElementById('time').value = currentTime();
 
-function save(){ localStorage.setItem(KEY, JSON.stringify(data)); render(); }
+function save(){
+  localStorage.setItem(KEY, JSON.stringify(data));
+  render();
+}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1300)}
-function setToday(){document.getElementById('date').valueAsDate=new Date();toast('今日にしました')}
+function setToday(){document.getElementById('date').valueAsDate=new Date();document.getElementById('time').value=currentTime();toast('現在日時にしました')}
 function todayStr(){return new Date().toISOString().slice(0,10)}
+function currentTime(){
+  const d=new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
 function num(v){return Number(v)||0}
 function plusFood(x){const el=document.getElementById('food'); el.value=Math.max(0,num(el.value)+x);}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
@@ -189,7 +229,7 @@ function render(){
   const todayFood = todays.reduce((s,e)=>s+num(e.food),0);
   document.getElementById('todayFood').textContent = `${todayFood}g`;
   document.getElementById('todayCount').textContent = todays.length ? `${todays.length}件の記録` : '記録なし';
-  const latest = [...data.entries].filter(e=>e.weight).sort((a,b)=> (b.date+b.created).localeCompare(a.date+a.created))[0];
+  const latest = [...data.entries].filter(e=>e.weight).sort((a,b)=> (b.date+(b.time||'')+b.created).localeCompare(a.date+(a.time||'')+a.created))[0];
   document.getElementById('latestWeight').textContent = latest ? `${latest.weight}kg` : '-';
   document.getElementById('latestCat').textContent = latest ? `${latest.cat} / ${latest.date}` : 'まだなし';
   document.getElementById('catPills').innerHTML = data.cats.map(c=>{
@@ -198,10 +238,10 @@ function render(){
     const po=todays.filter(e=>e.cat===c && e.poop==='あり').length;
     return `<span class="pill">${c}：🍚${f}g　🚽${pe? 'あり':'-'}　💩${po? 'あり':'-'}</span>`;
   }).join('');
-  const list = [...data.entries].filter(e=>!onlyToday || e.date===td).sort((a,b)=>(b.date+b.created).localeCompare(a.date+a.created)).slice(0,100);
+  const list = [...data.entries].filter(e=>!onlyToday || e.date===td).sort((a,b)=>(b.date+(b.time||'')+b.created).localeCompare(a.date+(a.time||'')+a.created)).slice(0,100);
   document.getElementById('entries').innerHTML = list.map(e=>`
     <div class="entry">
-      <div class="date">${e.date}｜${e.cat}</div>
+      <div class="date">${e.date} ${e.time?e.time:""}｜${e.cat}</div>
       <div>${e.food?`🍚 ${e.food}g　`:''}${e.weight?`⚖️ ${e.weight}kg　`:''}${e.water?`💧 ${e.water}ml　`:''}</div>
       <div class="muted">${e.pee?`おしっこ:${e.pee}　`:''}${e.poop?`うんち:${e.poop}　`:''}${e.note||''}</div>
       <button class="danger" style="margin-top:8px;padding:7px 10px;font-size:12px" onclick="deleteEntry('${e.id}')">削除</button>
@@ -212,15 +252,15 @@ function addEntry(){
   const entry = {
     id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random())),
     created: new Date().toISOString(),
-    date: document.getElementById('date').value, cat: document.getElementById('cat').value,
+    date: document.getElementById('date').value, time: document.getElementById('time').value, cat: document.getElementById('cat').value,
     food: document.getElementById('food').value, weight: document.getElementById('weight').value, water: document.getElementById('water').value,
     pee: document.getElementById('pee').value, poop: document.getElementById('poop').value, note: document.getElementById('note').value.trim()
   };
-  if(!entry.date || !entry.cat){ alert('日付とねこを入れてね'); return; }
+  if(!entry.date || !entry.time || !entry.cat){ alert('日付・時間・ねこを入れてね'); return; }
   if(!entry.food && !entry.weight && !entry.water && !entry.pee && !entry.poop && !entry.note){ alert('何か1つ記録してね'); return; }
   data.entries.push(entry);
   ['food','weight','water','note'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('pee').value=''; document.getElementById('poop').value='';
+  document.getElementById('pee').value=''; document.getElementById('poop').value=''; document.getElementById('time').value=currentTime();
   save(); toast('保存しました');
 }
 function addCat(){const name=document.getElementById('newCat').value.trim();if(name&&!data.cats.includes(name)){data.cats.push(name);document.getElementById('newCat').value='';save();toast('追加しました')}}
@@ -268,9 +308,36 @@ function drawChart(){
     ? `最新 ${latest.value.toFixed(2)}kg。初回から ${diff>=0?'+':''}${diff.toFixed(2)}kg。`
     : `最新日 ${latest.value}g。平均 ${Math.round(vals.reduce((a,b)=>a+b,0)/vals.length)}g/日。`;
 }
+function exportBackup(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`neko-log-backup-${todayStr()}.json`;
+  a.click();
+}
+function importBackup(event){
+  const file=event.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const imported=JSON.parse(reader.result);
+      if(!imported.cats || !imported.entries) throw new Error('invalid');
+      if(!confirm('現在のデータをバックアップ内容で上書きします。よいですか？')) return;
+      data=imported;
+      save();
+      toast('復元しました');
+    }catch(e){
+      alert('バックアップファイルを読み込めませんでした');
+    }finally{
+      event.target.value='';
+    }
+  };
+  reader.readAsText(file);
+}
 function exportCSV(){
-  const header=['date','cat','food_g','weight_kg','water_ml','pee','poop','note'];
-  const lines=[header.join(',')].concat(data.entries.map(e=>header.map(h=>`"${String({date:e.date,cat:e.cat,food_g:e.food,weight_kg:e.weight,water_ml:e.water,pee:e.pee,poop:e.poop,note:e.note}[h]??'').replaceAll('"','""')}"`).join(',')));
+  const header=['date','time','cat','food_g','weight_kg','water_ml','pee','poop','note'];
+  const lines=[header.join(',')].concat(data.entries.map(e=>header.map(h=>`"${String({date:e.date,time:e.time||'',cat:e.cat,food_g:e.food,weight_kg:e.weight,water_ml:e.water,pee:e.pee,poop:e.poop,note:e.note}[h]??'').replaceAll('"','""')}"`).join(',')));
   const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='neko-log.csv'; a.click();
 }
 render();
