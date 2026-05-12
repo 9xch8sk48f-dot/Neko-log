@@ -18,7 +18,7 @@
     header{padding:calc(18px + env(safe-area-inset-top)) 18px 10px;position:sticky;top:0;z-index:5;background:rgba(255,247,239,.86);backdrop-filter:blur(14px)}
     .hero{max-width:780px;margin:auto;display:flex;justify-content:space-between;gap:12px;align-items:center}
     h1{font-size:26px;margin:0;letter-spacing:-.02em}.sub{color:var(--muted);font-size:13px;margin-top:3px}
-    main{padding:8px 14px calc(92px + env(safe-area-inset-bottom));max-width:780px;margin:auto}
+    main{padding:8px 14px calc(120px + env(safe-area-inset-bottom));max-width:780px;margin:auto}
     .card{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:22px;padding:16px;margin:12px 0;box-shadow:var(--shadow)}
     .section-title{font-size:17px;font-weight:800;margin:0 0 12px}
     label{display:block;font-size:12px;color:var(--muted);margin:10px 0 5px}
@@ -39,7 +39,7 @@
     .cat-check input{width:auto;transform:scale(1.2)}
     .cat-check span{font-weight:800}
     .entry{border-top:1px solid var(--line);padding:12px 0}.entry:first-child{border-top:0}.date{font-weight:850}.muted{color:var(--muted);font-size:13px}
-    .tabs{position:fixed;bottom:0;left:0;right:0;z-index:10;background:rgba(255,255,255,.92);border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));backdrop-filter:blur(16px)}
+    .tabs{position:fixed;left:0;right:0;bottom:0;z-index:999;background:rgba(255,255,255,.96);border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));backdrop-filter:blur(16px);box-shadow:0 -8px 24px rgba(73,44,25,.08)}
     .tabs button{background:#fff;color:var(--ink);border:1px solid var(--line);padding:10px 14px;box-shadow:none}.tabs button.active{background:var(--accent);color:white;border-color:var(--accent)}
     canvas{width:100%;height:300px;border:1px solid var(--line);border-radius:16px;background:#fff}
 
@@ -63,60 +63,88 @@
       .record-input-grid{grid-template-columns:1fr}
       .quick button{flex:1;min-width:0}
     }
-
-    /* v7: 記録フォームのUI整理 */
-    .record-top-grid{
-      display:grid;
-      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-      gap:12px;
-      align-items:end;
-    }
-    .record-top-grid .cat-select-field{grid-column:1/-1}
-    .record-input-grid{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:12px;
-      align-items:end;
-    }
-    .toilet-grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-      align-items:end;
-    }
-    .record-top-grid > div,
-    .record-input-grid > div,
-    .toilet-grid > div{min-width:0}
-    #date,#time,#cat,#food,#weight,#water,#pee,#poop,#note{
-      width:100%;
-      min-height:54px;
-    }
-    #date,#time,#cat{text-align:center}
-    #cat{text-align:left}
-    .quick{
-      gap:10px;
-      margin:8px 0 10px;
-    }
-    .quick button{
-      min-width:86px;
-      min-height:46px;
-    }
-    .memo-label{margin-top:12px}
-    #note{min-height:84px;padding-bottom:18px}
-    main{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
-    .tabs{box-shadow:0 -8px 24px rgba(73,44,25,.06)}
-    @media(max-width:720px){
-      .record-input-grid{grid-template-columns:1fr 1fr}
-      .record-input-grid .wide{grid-column:1/-1}
-    }
-    @media(max-width:520px){
-      .record-top-grid,
-      .record-input-grid,
-      .toilet-grid{grid-template-columns:1fr}
-      .record-top-grid .cat-select-field,
+.record-top-grid .cat-select-field,
       .record-input-grid .wide{grid-column:auto}
       #date,#time{text-align:left}
       .quick button{flex:1;min-width:0}
+    }
+
+    /* v8: 入力フォームと下部タブを安定化 */
+    html,body{min-height:100%;overflow-x:hidden}
+    body{padding-bottom:0}
+    #home .card{overflow:visible}
+    .record-top-grid{
+      display:grid !important;
+      grid-template-columns:1fr !important;
+      gap:12px !important;
+      align-items:stretch !important;
+    }
+    .record-top-grid > div,
+    .record-input-grid > div,
+    .toilet-grid > div{min-width:0 !important;width:100% !important}
+    .record-top-grid .cat-select-field{grid-column:auto !important}
+    .record-input-grid{
+      display:grid !important;
+      grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+      gap:12px !important;
+      align-items:stretch !important;
+    }
+    .toilet-grid{
+      display:grid !important;
+      grid-template-columns:1fr 1fr !important;
+      gap:12px !important;
+      align-items:stretch !important;
+    }
+    #date,#time,#cat,#food,#weight,#water,#pee,#poop,#note{
+      width:100% !important;
+      max-width:100% !important;
+      min-height:56px !important;
+      display:block !important;
+      line-height:1.2 !important;
+    }
+    #date,#time{
+      text-align:left !important;
+      padding-left:18px !important;
+      padding-right:18px !important;
+    }
+    #cat{text-align:left !important}
+    .quick{
+      display:grid !important;
+      grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+      gap:10px !important;
+      margin:8px 0 12px !important;
+    }
+    .quick button{
+      width:100% !important;
+      min-width:0 !important;
+      min-height:46px !important;
+      padding-left:8px !important;
+      padding-right:8px !important;
+    }
+    .memo-label{margin-top:12px !important}
+    #note{min-height:92px !important;padding-bottom:18px !important}
+    main{
+      padding-bottom:calc(150px + env(safe-area-inset-bottom)) !important;
+    }
+    .tabs{
+      position:fixed !important;
+      left:0 !important;
+      right:0 !important;
+      bottom:0 !important;
+      margin:0 !important;
+      transform:none !important;
+      z-index:9999 !important;
+      padding-bottom:calc(10px + env(safe-area-inset-bottom)) !important;
+    }
+    @media(max-width:720px){
+      .record-input-grid{grid-template-columns:1fr 1fr !important}
+      .record-input-grid .wide{grid-column:1/-1 !important}
+    }
+    @media(max-width:520px){
+      .record-input-grid,
+      .toilet-grid{grid-template-columns:1fr !important}
+      .record-input-grid .wide{grid-column:auto !important}
+      .quick{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
     }
     .hidden{display:none}.mini{font-size:12px;color:var(--muted)}
     .quick button{padding:10px 13px;font-size:14px;background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
@@ -200,7 +228,7 @@
     </div>
     <div class="muted" style="margin-top:14px">※ ねこを削除すると、その子の記録も一緒に削除されます。</div>
     <div class="muted" style="margin-top:6px">※ この版はiPhoneのブラウザ内保存です。正式アプリ版にすると、iCloud共有やパートナー共有を作りやすくなります。</div>
-    <div class="muted" style="margin-top:6px">現在のアプリ版：v7 / 保存キー：neko-log-data</div>
+    <div class="muted" style="margin-top:6px">現在のアプリ版：v8 / 保存キー：neko-log-data</div>
   </div>
 </section>
 </main>
@@ -215,7 +243,7 @@
 <script>
 // データ保存キーは今後のアップデートでも固定。
 // APP_VERSIONは表示・管理用で、保存先キーとは分ける。
-const APP_VERSION='v7';
+const APP_VERSION='v8';
 const KEY='neko-log-data';
 const LEGACY_KEYS=['neko-log-v3','neko-log-v2','neko-log-v1'];
 const DEFAULT_DATA={cats:["るる","もう1匹"],entries:[]};
