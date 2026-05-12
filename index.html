@@ -63,6 +63,61 @@
       .record-input-grid{grid-template-columns:1fr}
       .quick button{flex:1;min-width:0}
     }
+
+    /* v7: 記録フォームのUI整理 */
+    .record-top-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:12px;
+      align-items:end;
+    }
+    .record-top-grid .cat-select-field{grid-column:1/-1}
+    .record-input-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      align-items:end;
+    }
+    .toilet-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      align-items:end;
+    }
+    .record-top-grid > div,
+    .record-input-grid > div,
+    .toilet-grid > div{min-width:0}
+    #date,#time,#cat,#food,#weight,#water,#pee,#poop,#note{
+      width:100%;
+      min-height:54px;
+    }
+    #date,#time,#cat{text-align:center}
+    #cat{text-align:left}
+    .quick{
+      gap:10px;
+      margin:8px 0 10px;
+    }
+    .quick button{
+      min-width:86px;
+      min-height:46px;
+    }
+    .memo-label{margin-top:12px}
+    #note{min-height:84px;padding-bottom:18px}
+    main{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+    .tabs{box-shadow:0 -8px 24px rgba(73,44,25,.06)}
+    @media(max-width:720px){
+      .record-input-grid{grid-template-columns:1fr 1fr}
+      .record-input-grid .wide{grid-column:1/-1}
+    }
+    @media(max-width:520px){
+      .record-top-grid,
+      .record-input-grid,
+      .toilet-grid{grid-template-columns:1fr}
+      .record-top-grid .cat-select-field,
+      .record-input-grid .wide{grid-column:auto}
+      #date,#time{text-align:left}
+      .quick button{flex:1;min-width:0}
+    }
     .hidden{display:none}.mini{font-size:12px;color:var(--muted)}
     .quick button{padding:10px 13px;font-size:14px;background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
     .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#2b2521;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;opacity:0;transition:.2s;z-index:20}.toast.show{opacity:1}
@@ -92,7 +147,7 @@
     <div class="grid3 record-top-grid">
       <div><label>日付</label><input id="date" type="date"></div>
       <div><label>時間</label><input id="time" type="time"></div>
-      <div><label>ねこ</label><select id="cat"></select></div>
+      <div class="cat-select-field"><label>ねこ</label><select id="cat"></select></div>
     </div>
     <label>ごはん量をすばやく入力</label>
     <div class="row quick">
@@ -103,11 +158,11 @@
       <div><label>体重(kg)</label><input id="weight" type="number" step="0.01" inputmode="decimal" placeholder="例 1.85"></div>
       <div class="wide"><label>水/ミルク(ml)</label><input id="water" type="number" inputmode="decimal" placeholder="任意"></div>
     </div>
-    <div class="grid">
+    <div class="grid toilet-grid">
       <div><label>おしっこ</label><select id="pee"><option value="">未記録</option><option>あり</option><option>なし</option></select></div>
       <div><label>うんち</label><select id="poop"><option value="">未記録</option><option>あり</option><option>なし</option></select></div>
     </div>
-    <label>メモ</label><textarea id="note" placeholder="例：夜中に食べたっぽい、元気あり"></textarea>
+    <label class="memo-label">メモ</label><textarea id="note" placeholder="例：夜中に食べたっぽい、元気あり"></textarea>
     <div class="row" style="margin-top:12px"><button onclick="addEntry()">保存</button><button class="secondary" onclick="exportCSV()">CSV出力</button></div>
   </div>
 
@@ -145,7 +200,7 @@
     </div>
     <div class="muted" style="margin-top:14px">※ ねこを削除すると、その子の記録も一緒に削除されます。</div>
     <div class="muted" style="margin-top:6px">※ この版はiPhoneのブラウザ内保存です。正式アプリ版にすると、iCloud共有やパートナー共有を作りやすくなります。</div>
-    <div class="muted" style="margin-top:6px">現在のアプリ版：v6 / 保存キー：neko-log-data</div>
+    <div class="muted" style="margin-top:6px">現在のアプリ版：v7 / 保存キー：neko-log-data</div>
   </div>
 </section>
 </main>
@@ -160,7 +215,7 @@
 <script>
 // データ保存キーは今後のアップデートでも固定。
 // APP_VERSIONは表示・管理用で、保存先キーとは分ける。
-const APP_VERSION='v6';
+const APP_VERSION='v7';
 const KEY='neko-log-data';
 const LEGACY_KEYS=['neko-log-v3','neko-log-v2','neko-log-v1'];
 const DEFAULT_DATA={cats:["るる","もう1匹"],entries:[]};
