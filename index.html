@@ -79,26 +79,70 @@
         grid-column:auto !important;
       }
     }
+.record-input-grid,
+      .toilet-grid{
+        grid-template-columns:1fr !important;
+      }
+      .quick{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+      }
+      .record-input-grid .wide{
+        grid-column:auto !important;
+      }
+    }
 
-    /* v10: 下部の余計なスクロール余白を削減 */
+    /* v11: アプリ内スクロール方式に変更して下余白を根絶 */
     html,body{
-      min-height:100%;
-      overflow-x:hidden;
-      margin:0;
-      padding:0;
+      width:100%;
+      height:100%;
+      margin:0 !important;
+      padding:0 !important;
+      overflow:hidden !important;
     }
+
     body{
+      min-height:100dvh;
+      display:grid !important;
+      grid-template-rows:auto minmax(0,1fr) auto;
       padding-bottom:0 !important;
-      overscroll-behavior-y:none;
+      overscroll-behavior:none;
     }
+
+    header{
+      position:relative !important;
+      top:auto !important;
+      grid-row:1;
+    }
+
     main{
-      padding:8px 14px calc(74px + env(safe-area-inset-bottom)) !important;
+      grid-row:2;
+      overflow-y:auto !important;
+      -webkit-overflow-scrolling:touch;
+      padding:8px 14px 16px !important;
       max-width:780px;
-      margin:auto;
+      width:100%;
+      margin:0 auto !important;
+      min-height:0;
     }
+
+    .tabs{
+      grid-row:3;
+      position:relative !important;
+      left:auto !important;
+      right:auto !important;
+      bottom:auto !important;
+      z-index:9999 !important;
+      margin:0 !important;
+      padding:10px 10px calc(10px + env(safe-area-inset-bottom)) !important;
+      background:rgba(255,255,255,.96) !important;
+      border-top:1px solid var(--line) !important;
+      backdrop-filter:blur(16px);
+      box-shadow:0 -8px 24px rgba(73,44,25,.08);
+    }
+
     #home .card{overflow:visible}
     #home .card:last-child{
-      margin-bottom:8px !important;
+      margin-bottom:0 !important;
     }
 
     .record-top-grid{
@@ -107,16 +151,19 @@
       gap:12px !important;
       align-items:stretch !important;
     }
+
     .record-input-grid{
       display:grid !important;
       grid-template-columns:repeat(3,minmax(0,1fr)) !important;
       gap:12px !important;
     }
+
     .toilet-grid{
       display:grid !important;
       grid-template-columns:1fr 1fr !important;
       gap:12px !important;
     }
+
     .record-top-grid > div,
     .record-input-grid > div,
     .toilet-grid > div{
@@ -164,40 +211,26 @@
       min-height:46px !important;
     }
 
-    .tabs{
-      position:fixed !important;
-      left:0 !important;
-      right:0 !important;
-      bottom:0 !important;
-      z-index:9999 !important;
-      margin:0 !important;
-      padding:10px 10px calc(10px + env(safe-area-inset-bottom)) !important;
-      background:rgba(255,255,255,.96) !important;
-      border-top:1px solid var(--line) !important;
-      backdrop-filter:blur(16px);
-      box-shadow:0 -8px 24px rgba(73,44,25,.08);
-    }
-
     @media(max-width:720px){
       .record-input-grid{
         grid-template-columns:1fr 1fr !important;
       }
+
       .record-input-grid .wide{
         grid-column:1/-1 !important;
       }
     }
 
     @media(max-width:520px){
-      main{
-        padding-bottom:calc(82px + env(safe-area-inset-bottom)) !important;
-      }
       .record-input-grid,
       .toilet-grid{
         grid-template-columns:1fr !important;
       }
+
       .quick{
         grid-template-columns:repeat(2,minmax(0,1fr)) !important;
       }
+
       .record-input-grid .wide{
         grid-column:auto !important;
       }
@@ -284,7 +317,7 @@
     </div>
     <div class="muted" style="margin-top:14px">※ ねこを削除すると、その子の記録も一緒に削除されます。</div>
     <div class="muted" style="margin-top:6px">※ この版はiPhoneのブラウザ内保存です。正式アプリ版にすると、iCloud共有やパートナー共有を作りやすくなります。</div>
-    <div class="muted" style="margin-top:6px">現在のアプリ版：v10 / 保存キー：neko-log-data</div>
+    <div class="muted" style="margin-top:6px">現在のアプリ版：v11 / 保存キー：neko-log-data</div>
   </div>
 </section>
 </main>
@@ -299,7 +332,7 @@
 <script>
 // データ保存キーは今後のアップデートでも固定。
 // APP_VERSIONは表示・管理用で、保存先キーとは分ける。
-const APP_VERSION='v10';
+const APP_VERSION='v11';
 const KEY='neko-log-data';
 const LEGACY_KEYS=['neko-log-v3','neko-log-v2','neko-log-v1'];
 const DEFAULT_DATA={cats:["るる","もう1匹"],entries:[]};
