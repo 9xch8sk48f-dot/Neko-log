@@ -71,8 +71,16 @@
 .record-input-grid .wide{grid-column:auto !important}
       .quick{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
     }
+.quick{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+      }
 
-    /* v9: 時間入力と下部余白を調整 */
+      .record-input-grid .wide{
+        grid-column:auto !important;
+      }
+    }
+
+    /* v10: 下部の余計なスクロール余白を削減 */
     html,body{
       min-height:100%;
       overflow-x:hidden;
@@ -81,13 +89,18 @@
     }
     body{
       padding-bottom:0 !important;
+      overscroll-behavior-y:none;
     }
     main{
-      padding:8px 14px calc(92px + env(safe-area-inset-bottom)) !important;
+      padding:8px 14px calc(74px + env(safe-area-inset-bottom)) !important;
       max-width:780px;
       margin:auto;
     }
     #home .card{overflow:visible}
+    #home .card:last-child{
+      margin-bottom:8px !important;
+    }
+
     .record-top-grid{
       display:grid !important;
       grid-template-columns:1fr !important;
@@ -111,7 +124,6 @@
       width:100% !important;
     }
 
-    /* 入力欄サイズ統一 */
     #date,#time,#cat,#food,#weight,#water,#pee,#poop{
       width:100% !important;
       max-width:100% !important;
@@ -132,7 +144,6 @@
       padding:14px 18px !important;
     }
 
-    /* Safari time input 崩れ対策 */
     input[type="time"]{
       text-align:left !important;
       position:relative;
@@ -153,7 +164,6 @@
       min-height:46px !important;
     }
 
-    /* 下タブ */
     .tabs{
       position:fixed !important;
       left:0 !important;
@@ -178,15 +188,16 @@
     }
 
     @media(max-width:520px){
+      main{
+        padding-bottom:calc(82px + env(safe-area-inset-bottom)) !important;
+      }
       .record-input-grid,
       .toilet-grid{
         grid-template-columns:1fr !important;
       }
-
       .quick{
         grid-template-columns:repeat(2,minmax(0,1fr)) !important;
       }
-
       .record-input-grid .wide{
         grid-column:auto !important;
       }
@@ -273,7 +284,7 @@
     </div>
     <div class="muted" style="margin-top:14px">※ ねこを削除すると、その子の記録も一緒に削除されます。</div>
     <div class="muted" style="margin-top:6px">※ この版はiPhoneのブラウザ内保存です。正式アプリ版にすると、iCloud共有やパートナー共有を作りやすくなります。</div>
-    <div class="muted" style="margin-top:6px">現在のアプリ版：v9 / 保存キー：neko-log-data</div>
+    <div class="muted" style="margin-top:6px">現在のアプリ版：v10 / 保存キー：neko-log-data</div>
   </div>
 </section>
 </main>
@@ -288,7 +299,7 @@
 <script>
 // データ保存キーは今後のアップデートでも固定。
 // APP_VERSIONは表示・管理用で、保存先キーとは分ける。
-const APP_VERSION='v9';
+const APP_VERSION='v10';
 const KEY='neko-log-data';
 const LEGACY_KEYS=['neko-log-v3','neko-log-v2','neko-log-v1'];
 const DEFAULT_DATA={cats:["るる","もう1匹"],entries:[]};
