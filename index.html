@@ -34,10 +34,32 @@
     .stat{background:linear-gradient(180deg,#fff,#fff7f0);border:1px solid var(--line);border-radius:18px;padding:14px}
     .stat .muted{font-size:12px}.big{font-size:28px;font-weight:900;letter-spacing:-.03em}
     .pill{display:inline-flex;gap:5px;align-items:center;padding:7px 10px;border-radius:999px;background:var(--soft);border:1px solid #f2cfb5;font-size:13px;margin:3px}
+    .cat-check-list{display:grid;gap:8px;margin-top:14px}
+    .cat-check{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:16px;padding:10px 12px;background:#fff}
+    .cat-check input{width:auto;transform:scale(1.2)}
+    .cat-check span{font-weight:800}
     .entry{border-top:1px solid var(--line);padding:12px 0}.entry:first-child{border-top:0}.date{font-weight:850}.muted{color:var(--muted);font-size:13px}
     .tabs{position:fixed;bottom:0;left:0;right:0;z-index:10;background:rgba(255,255,255,.92);border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));backdrop-filter:blur(16px)}
     .tabs button{background:#fff;color:var(--ink);border:1px solid var(--line);padding:10px 14px;box-shadow:none}.tabs button.active{background:var(--accent);color:white;border-color:var(--accent)}
     canvas{width:100%;height:300px;border:1px solid var(--line);border-radius:16px;background:#fff}
+
+    /* 記録フォームの崩れ対策 */
+    #home .card{overflow:hidden}
+    .record-top-grid{align-items:end}
+    .record-top-grid > div,.record-input-grid > div{min-width:0}
+    input,select,textarea{min-height:54px;line-height:1.2}
+    input[type="date"]{appearance:none;-webkit-appearance:none;text-align:left}
+    .quick{gap:8px;margin-bottom:4px}
+    .quick button{min-width:76px}
+    @media(max-width:640px){
+      .record-top-grid{grid-template-columns:1fr}
+      .record-input-grid{grid-template-columns:1fr 1fr}
+      #date,#cat{width:100%;font-size:17px}
+    }
+    @media(max-width:430px){
+      .record-input-grid{grid-template-columns:1fr}
+      .quick button{flex:1;min-width:0}
+    }
     .hidden{display:none}.mini{font-size:12px;color:var(--muted)}
     .quick button{padding:10px 13px;font-size:14px;background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
     .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#2b2521;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;opacity:0;transition:.2s;z-index:20}.toast.show{opacity:1}
@@ -64,7 +86,7 @@
 
   <div class="card">
     <div class="section-title">記録する</div>
-    <div class="grid">
+    <div class="grid record-top-grid">
       <div><label>日付</label><input id="date" type="date"></div>
       <div><label>ねこ</label><select id="cat"></select></div>
     </div>
@@ -72,7 +94,7 @@
     <div class="row quick">
       <button onclick="plusFood(5)">+5g</button><button onclick="plusFood(10)">+10g</button><button onclick="plusFood(20)">+20g</button><button onclick="plusFood(-5)">-5g</button>
     </div>
-    <div class="grid3">
+    <div class="grid3 record-input-grid">
       <div><label>ごはん(g)</label><input id="food" type="number" inputmode="decimal" placeholder="例 25"></div>
       <div><label>体重(kg)</label><input id="weight" type="number" step="0.01" inputmode="decimal" placeholder="例 1.85"></div>
       <div class="wide"><label>水/ミルク(ml)</label><input id="water" type="number" inputmode="decimal" placeholder="任意"></div>
@@ -108,8 +130,12 @@
     <div class="section-title">ねこ設定</div>
     <label>名前を追加</label><input id="newCat" placeholder="例：るる">
     <div class="row" style="margin-top:10px"><button onclick="addCat()">追加</button><button class="danger" onclick="clearAll()">全データ削除</button></div>
-    <div id="catList" style="margin-top:14px"></div>
-    <div class="muted" style="margin-top:14px">※ この版はiPhoneのブラウザ内保存です。正式アプリ版にすると、iCloud共有やパートナー共有を作りやすくなります。</div>
+    <div id="catList" class="cat-check-list"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="danger" onclick="deleteSelectedCats()">チェックしたねこを削除</button>
+    </div>
+    <div class="muted" style="margin-top:14px">※ ねこを削除すると、その子の記録も一緒に削除されます。</div>
+    <div class="muted" style="margin-top:6px">※ この版はiPhoneのブラウザ内保存です。正式アプリ版にすると、iCloud共有やパートナー共有を作りやすくなります。</div>
   </div>
 </section>
 </main>
@@ -134,6 +160,18 @@ function setToday(){document.getElementById('date').valueAsDate=new Date();toast
 function todayStr(){return new Date().toISOString().slice(0,10)}
 function num(v){return Number(v)||0}
 function plusFood(x){const el=document.getElementById('food'); el.value=Math.max(0,num(el.value)+x);}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function deleteSelectedCats(){
+  const selected=[...document.querySelectorAll('.cat-delete-check:checked')].map(x=>x.value);
+  if(selected.length===0){alert('削除するねこにチェックを入れてね');return;}
+  if(data.cats.length-selected.length<=0){alert('ねこは最低1匹残してね');return;}
+  const msg=`${selected.join('、')} を削除します。\nこの子たちの記録も一緒に削除されます。よいですか？`;
+  if(!confirm(msg)) return;
+  data.cats=data.cats.filter(c=>!selected.includes(c));
+  data.entries=data.entries.filter(e=>!selected.includes(e.cat));
+  save();
+  toast('削除しました');
+}
 
 function render(){
   for (const id of ['cat','chartCat']) {
@@ -141,7 +179,11 @@ function render(){
     data.cats.forEach(c=>{ const o=document.createElement('option'); o.textContent=c; o.value=c; el.appendChild(o); });
     if(data.cats.includes(val)) el.value=val;
   }
-  document.getElementById('catList').innerHTML=data.cats.map(c=>`<span class="pill">🐱 ${c}</span>`).join('');
+  document.getElementById('catList').innerHTML=data.cats.map(c=>`
+    <label class="cat-check">
+      <input type="checkbox" class="cat-delete-check" value="${escapeHtml(c)}">
+      <span>🐱 ${escapeHtml(c)}</span>
+    </label>`).join('');
   const td = todayStr();
   const todays = data.entries.filter(e=>e.date===td);
   const todayFood = todays.reduce((s,e)=>s+num(e.food),0);
